@@ -9,9 +9,10 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-
+@Component
 public class SignatureUtil {
 
   private final String secretKey;

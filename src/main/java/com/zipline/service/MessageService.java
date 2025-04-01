@@ -1,6 +1,7 @@
 package com.zipline.service;
 
 import com.zipline.dto.SendMessageRequestDto;
+import com.zipline.util.SignatureUtil;
 import java.util.Map;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ public class MessageService {
 
   private final WebClient webClient;
 
-  public MessageService(WebClient webClient, SignatureService signatureService) {
+  public MessageService(WebClient webClient, SignatureUtil signatureUtil) {
     this.webClient = webClient;
   }
 
