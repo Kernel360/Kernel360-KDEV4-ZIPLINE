@@ -1,4 +1,4 @@
-package com.zipline.service;
+package com.zipline.util;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -9,19 +9,27 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-@Service
-public class SignatureService {
 
-  @Value("${sms.secret-key}")
-  String secretKey;
+public class SignatureUtil {
 
-  @Value("${sms.auth-method}")
-  String authMethod;
+  private final String secretKey;
+  private final String authMethod;
+  private final String now;
+  private final String salt;
+  private final String authMessage;
 
-  public static String generateSalt() {
+  public SignatureUtil(@Value("${sms.secret-key}") String secretKey,
+      @Value("${sms.auth-method}") String authMethod) {
+    this.secretKey = secretKey;
+    this.authMethod = authMethod;
+    this.now = Instant.now().toString();
+    this.salt = generateSalt();
+    this.authMessage = now + salt;
+  }
+
+  private static String generateSalt() {
     SecureRandom random = new SecureRandom();
     byte[] salt = new byte[16];
     random.nextBytes(salt);
@@ -31,10 +39,6 @@ public class SignatureService {
   public Mono<Map<String, String>> generateSignature() {
     return Mono.fromCallable(() -> {
       Map<String, String> result = new HashMap<>();
-
-      String now = Instant.now().toString();
-      String salt = generateSalt();
-      String authMessage = now + salt;
 
       Mac mac = Mac.getInstance(authMethod);
       SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8),
@@ -51,6 +55,6 @@ public class SignatureService {
 
       return result;
 
-    }).onErrorMap(e -> new RuntimeException("signature를 생성 중 오류가 발생했습니다.", e));
+    }).onErrorMap(e -> new RuntimeException("signature를 생성 중에 오류가 발생했습니다.", e));
   }
 }

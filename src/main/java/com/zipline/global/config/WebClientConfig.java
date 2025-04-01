@@ -1,6 +1,6 @@
 package com.zipline.global.config;
 
-import com.zipline.service.SignatureService;
+import com.zipline.util.SignatureUtil;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +16,7 @@ public class WebClientConfig {
   String apiKey;
 
   @Bean
-  public WebClient smsWebClient(SignatureService signatureService) {
+  public WebClient smsWebClient(SignatureUtil signatureService) {
     Map<String, String> signatureResult = signatureService.generateSignature()
         .block();
 
