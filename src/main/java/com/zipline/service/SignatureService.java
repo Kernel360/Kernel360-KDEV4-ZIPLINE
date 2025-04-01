@@ -1,5 +1,6 @@
 package com.zipline.service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.HashMap;
@@ -36,10 +37,11 @@ public class SignatureService {
       String authMessage = now + salt;
 
       Mac mac = Mac.getInstance(authMethod);
-      SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(), authMethod);
+      SecretKeySpec keySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8),
+          authMethod);
       mac.init(keySpec);
 
-      byte[] hmacBytes = mac.doFinal(authMessage.getBytes());
+      byte[] hmacBytes = mac.doFinal(authMessage.getBytes(StandardCharsets.UTF_8));
 
       String hash = HexUtils.toHexString(hmacBytes);
 
