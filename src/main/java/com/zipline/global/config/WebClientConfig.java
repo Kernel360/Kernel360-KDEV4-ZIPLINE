@@ -16,7 +16,7 @@ public class WebClientConfig {
   String apiKey;
 
   @Bean
-  public WebClient webClient(SignatureService signatureService) {
+  public WebClient smsWebClient(SignatureService signatureService) {
     Map<String, String> signatureResult = signatureService.generateSignature()
         .block();
 
