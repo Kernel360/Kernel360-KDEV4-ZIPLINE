@@ -35,6 +35,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 				userUid).ifPresent(template -> {
 				throw new MessageTemplateException(MessageTemplateErrorCode.DUPLICATE_TEMPLATE_CATEGORY);
 			});
+		}
 
 			User user = userRepository.findById(userUid)
 				.orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
@@ -51,7 +52,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 				.build();
 
 			messageTemplateRepository.save(messageTemplate);
-		}
+
 	}
 
 	@Override
