@@ -1,23 +1,23 @@
 package com.zipline.service.message;
 
-import java.time.LocalDateTime;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.zipline.entity.enums.MessageTemplateCategory;
 import com.zipline.entity.message.MessageTemplate;
 import com.zipline.entity.user.User;
-import com.zipline.global.exception.user.errorcode.UserErrorCode;
-import com.zipline.global.exception.message.errorcode.MessageTemplateErrorCode;
 import com.zipline.global.exception.message.MessageTemplateException;
+import com.zipline.global.exception.message.errorcode.MessageTemplateErrorCode;
 import com.zipline.global.exception.user.UserException;
+import com.zipline.global.exception.user.errorcode.UserErrorCode;
 import com.zipline.repository.message.MessageTemplateRepository;
 import com.zipline.repository.user.UserRepository;
 import com.zipline.service.message.dto.message.request.MessageTemplateRequestDTO;
-
+import com.zipline.service.message.dto.message.response.MessageTemplateResponseDTO;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -53,5 +53,15 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 
 			messageTemplateRepository.save(messageTemplate);
 		}
+	}
+
+	@Override
+	@ReadOnlyProperty
+	public List<MessageTemplateResponseDTO> getMessageTemplateList(Long userUid) {
+		List<MessageTemplate> messageTemplateList = messageTemplateRepository.findByUserUid(userUid);
+		return messageTemplateList.stream()
+				.map(
+						MessageTemplateResponseDTO::new)
+				.toList();
 	}
 }
