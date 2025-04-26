@@ -1,9 +1,7 @@
 package com.zipline.entity.message;
 
-import com.zipline.entity.customer.Customer;
 import com.zipline.entity.enums.MessageTemplateCategory;
 import com.zipline.entity.user.User;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,11 +12,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "message_templates")
 @Entity
+@Getter
 public class MessageTemplate {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
