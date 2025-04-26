@@ -60,8 +60,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 	public List<MessageTemplateResponseDTO> getMessageTemplateList(Long userUid) {
 		List<MessageTemplate> messageTemplateList = messageTemplateRepository.findByUserUid(userUid);
 		return messageTemplateList.stream()
-				.map(
-						MessageTemplateResponseDTO::new)
+				.map(MessageTemplateResponseDTO::new)
 				.toList();
 	}
 }
