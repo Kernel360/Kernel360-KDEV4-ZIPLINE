@@ -29,6 +29,11 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 	@Override
 	@Transactional
 	public void createMessageTemplate(MessageTemplateRequestDTO requestDTO, Long userUid) {
+		messageTemplateRepository.findByNameAndUserUidAndDeletedAtIsNull(requestDTO.getName(), userUid)
+				.ifPresent(template -> {
+					throw new MessageTemplateException(MessageTemplateErrorCode.DUPLICATE_TEMPLATE_NAME);
+				});
+
 		if (requestDTO.getCategory().equals(MessageTemplateCategory.BIRTHDAY)
 			|| requestDTO.getCategory().equals(MessageTemplateCategory.EXPIRED_NOTI)) {
 			messageTemplateRepository.findByCategoryAndUserUidAndDeletedAtIsNull(requestDTO.getCategory(),

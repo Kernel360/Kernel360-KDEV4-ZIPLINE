@@ -8,5 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MessageTemplateRepository  extends JpaRepository<MessageTemplate, Long> {
   Optional<MessageTemplate> findByCategoryAndUserUidAndDeletedAtIsNull(MessageTemplateCategory category, Long userUid);
+  Optional<MessageTemplate> findByNameAndUserUidAndDeletedAtIsNull(String name, Long userUid);
   List<MessageTemplate> findByUserUid(Long userUid);
 }
