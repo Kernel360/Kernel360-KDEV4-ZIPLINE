@@ -3,10 +3,8 @@ package com.zipline.controller.publicitem;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+//TODO: 임포트 분리
+import org.springframework.web.bind.annotation.*;
 
 import com.zipline.global.response.ApiResponse;
 import com.zipline.global.util.CrawlingStatusManager;

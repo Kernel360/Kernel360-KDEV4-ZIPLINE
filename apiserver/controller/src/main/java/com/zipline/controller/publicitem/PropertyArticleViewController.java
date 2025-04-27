@@ -2,6 +2,12 @@ package com.zipline.controller.publicitem;
 
 import java.time.LocalDateTime;
 
+import com.zipline.entity.enums.Category;
+import com.zipline.service.publicitem.PropertyArticleViewService;
+import com.zipline.service.publicitem.dto.PropertyArticlePageResponseDTO;
+import com.zipline.service.publicitem.dto.PropertyArticleSearchDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,24 +19,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zipline.domain.dto.publicitem.PropertyArticlePageResponseDTO;
-import com.zipline.domain.dto.publicitem.PropertyArticleSearchDTO;
-import com.zipline.domain.entity.enums.Category;
-import com.zipline.service.publicItem.PropertyArticleViewService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/property-articles")
 @RequiredArgsConstructor
+@Tag(name = "공개 매물 목록 검색", description = "공개 매물 목록 검색 API")
 public class PropertyArticleViewController {
 
 	private final PropertyArticleViewService propertyArticleViewService;
 
-	/**
-	 * 매물 목록 검색 API
-	 * 다양한 조건으로 매물을 검색하고 정렬할 수 있습니다.
-	 */
+	@Operation(summary = "매물 목록 검색", description = "매물 목록 검색 API")
 	@GetMapping("/search")
 	public ResponseEntity<PropertyArticlePageResponseDTO> searchPropertyArticles(
 		@RequestParam(required = false) String regionCode,
@@ -45,40 +45,20 @@ public class PropertyArticleViewController {
 		@RequestParam(required = false) Long maxMonthlyRent,
 		@RequestParam(required = false) Double minArea,
 		@RequestParam(required = false) Double maxArea,
-		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
 		@RequestParam(defaultValue = "createdAt") String sortBy,
 		@RequestParam(defaultValue = "desc") String sortDirection,
 		@RequestParam(defaultValue = "0") Integer page,
 		@RequestParam(defaultValue = "10") Integer size) {
 
-		PropertyArticleSearchDTO searchDTO = PropertyArticleSearchDTO.builder()
-			.regionCode(regionCode)
-			.buildingName(buildingName)
-			.buildingType(buildingType)
-			.category(category)
-			.minPrice(minPrice)
-			.maxPrice(maxPrice)
-			.minDeposit(minDeposit)
-			.maxDeposit(maxDeposit)
-			.minMonthlyRent(minMonthlyRent)
-			.maxMonthlyRent(maxMonthlyRent)
-			.minArea(minArea)
-			.maxArea(maxArea)
-			.startDate(startDate)
-			.endDate(endDate)
-			.sortBy(sortBy)
-			.sortDirection(sortDirection)
-			.page(page)
-			.size(size)
-			.build();
+		PropertyArticleSearchDTO searchDTO = PropertyArticleSearchDTO.fromRequestParams(
+			regionCode, buildingName, buildingType, category, minPrice, maxPrice, minDeposit, maxDeposit,
+			minMonthlyRent, maxMonthlyRent, minArea, maxArea, sortBy, sortDirection, page, size);
+
 		PropertyArticlePageResponseDTO response = propertyArticleViewService.searchPropertyArticles(searchDTO);
 		return ResponseEntity.ok(response);
 	}
 
-	/**
-	 * 지역별 매물 목록 조회 API
-	 */
+	@Operation(summary = "지역별 매물 목록 조회", description = "지역별 매물 목록 조회 API")
 	@GetMapping("/region/{regionCode}")
 	public ResponseEntity<PropertyArticlePageResponseDTO> getPropertyArticlesByRegion(
 		@PathVariable String regionCode,

@@ -1,7 +1,7 @@
-package com.zipline.infrastructure.publicItem.repository;
+package com.zipline.repository.publicitem;
 
-import com.zipline.domain.entity.publicitem.PropertyArticle;
-import com.zipline.domain.entity.enums.Category;
+import com.zipline.entity.enums.Category;
+import com.zipline.entity.publicitem.PropertyArticle;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
@@ -38,15 +38,8 @@ public class PropertyArticleViewSpecification {
     public static Specification<PropertyArticle> priceBetween(Long minPrice, Long maxPrice) {
         return (root, query, criteriaBuilder) -> {
             if (minPrice == null && maxPrice == null) return null;
-            
-            if (minPrice == null) {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("price"), maxPrice);
-            }
-            
-            if (maxPrice == null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("price"), minPrice);
-            }
-            
+            if (minPrice == null) return criteriaBuilder.lessThanOrEqualTo(root.get("price"), maxPrice);
+            if (maxPrice == null) return criteriaBuilder.greaterThanOrEqualTo(root.get("price"), minPrice);
             return criteriaBuilder.between(root.get("price"), minPrice, maxPrice);
         };
     }
@@ -57,15 +50,8 @@ public class PropertyArticleViewSpecification {
     public static Specification<PropertyArticle> depositBetween(Long minDeposit, Long maxDeposit) {
         return (root, query, criteriaBuilder) -> {
             if (minDeposit == null && maxDeposit == null) return null;
-            
-            if (minDeposit == null) {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("deposit"), maxDeposit);
-            }
-            
-            if (maxDeposit == null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("deposit"), minDeposit);
-            }
-            
+            if (minDeposit == null) return criteriaBuilder.lessThanOrEqualTo(root.get("deposit"), maxDeposit);
+            if (maxDeposit == null) return criteriaBuilder.greaterThanOrEqualTo(root.get("deposit"), minDeposit);
             return criteriaBuilder.between(root.get("deposit"), minDeposit, maxDeposit);
         };
     }
@@ -76,15 +62,8 @@ public class PropertyArticleViewSpecification {
     public static Specification<PropertyArticle> monthlyRentBetween(Long minRent, Long maxRent) {
         return (root, query, criteriaBuilder) -> {
             if (minRent == null && maxRent == null) return null;
-            
-            if (minRent == null) {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("monthlyRent"), maxRent);
-            }
-            
-            if (maxRent == null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("monthlyRent"), minRent);
-            }
-            
+            if (minRent == null) return criteriaBuilder.lessThanOrEqualTo(root.get("monthlyRent"), maxRent);
+            if (maxRent == null) return criteriaBuilder.greaterThanOrEqualTo(root.get("monthlyRent"), minRent);
             return criteriaBuilder.between(root.get("monthlyRent"), minRent, maxRent);
         };
     }
@@ -95,15 +74,8 @@ public class PropertyArticleViewSpecification {
     public static Specification<PropertyArticle> exclusiveAreaBetween(Double minArea, Double maxArea) {
         return (root, query, criteriaBuilder) -> {
             if (minArea == null && maxArea == null) return null;
-            
-            if (minArea == null) {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("exclusiveArea"), maxArea);
-            }
-            
-            if (maxArea == null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("exclusiveArea"), minArea);
-            }
-            
+            if (minArea == null) return criteriaBuilder.lessThanOrEqualTo(root.get("exclusiveArea"), maxArea);
+            if (maxArea == null) return criteriaBuilder.greaterThanOrEqualTo(root.get("exclusiveArea"), minArea);
             return criteriaBuilder.between(root.get("exclusiveArea"), minArea, maxArea);
         };
     }
@@ -114,17 +86,9 @@ public class PropertyArticleViewSpecification {
     public static Specification<PropertyArticle> createdAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, criteriaBuilder) -> {
             if (startDate == null && endDate == null) return null;
-            
-            if (startDate == null) {
-                return criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), endDate);
-            }
-            
-            if (endDate == null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), startDate);
-            }
-            
+            if (startDate == null) return criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), endDate);
+            if (endDate == null) return criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), startDate);
             return criteriaBuilder.between(root.get("createdAt"), startDate, endDate);
         };
     }
 }
-

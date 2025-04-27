@@ -1,14 +1,12 @@
-package com.zipline.domain.dto.publicitem;
+package com.zipline.service.publicitem.dto;
 
-import com.zipline.domain.entity.enums.Category;
-import com.zipline.domain.entity.enums.Platform;
-import com.zipline.domain.entity.publicitem.PropertyArticle;
+import com.zipline.entity.enums.Category;
+import com.zipline.entity.enums.Platform;
+import com.zipline.entity.publicitem.PropertyArticle;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +31,6 @@ public class PropertyArticleViewDTO {
     private Double exclusiveArea;
     private Platform platform;
     private String platformUrl;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     /**
      * PropertyArticle 엔티티를 DTO로 변환
@@ -57,8 +53,6 @@ public class PropertyArticleViewDTO {
                 .exclusiveArea(article.getExclusiveArea())
                 .platform(article.getPlatform())
                 .platformUrl(article.getPlatformUrl())
-                .createdAt(article.getCreatedAt())
-                .updatedAt(article.getUpdatedAt())
                 .build();
     }
 
@@ -71,4 +65,3 @@ public class PropertyArticleViewDTO {
                 .collect(Collectors.toList());
     }
 }
-

@@ -1,9 +1,9 @@
-package com.zipline.service.publicItem;
+package com.zipline.service.publicitem;
 
+import com.zipline.service.publicitem.dto.PropertyArticlePageResponseDTO;
+import com.zipline.service.publicitem.dto.PropertyArticleSearchDTO;
 import org.springframework.data.domain.Pageable;
 
-import com.zipline.domain.dto.publicitem.PropertyArticlePageResponseDTO;
-import com.zipline.domain.dto.publicitem.PropertyArticleSearchDTO;
 
 public interface PropertyArticleViewService {
 
@@ -24,3 +24,4 @@ public interface PropertyArticleViewService {
 	 */
 	PropertyArticlePageResponseDTO getPropertyArticlesByRegion(String regionCode, Pageable pageable);
 }
+

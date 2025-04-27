@@ -1,4 +1,4 @@
-package com.zipline.domain.dto.publicitem;
+package com.zipline.service.publicitem.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
