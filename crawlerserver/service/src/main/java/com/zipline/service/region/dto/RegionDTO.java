@@ -39,18 +39,6 @@ public class RegionDTO {
             .collect(Collectors.toList());
     }
 
-    //todo: 상태관리 이전대애서 구현필요
-    public static Region createKoreaRegion() {
-        return Region.builder()
-                .cortarNo(0L)
-                .cortarName("대한민국")
-                .level(0)
-                .centerLat(36.5)
-                .centerLon(127.5)
-                .parent(null)
-                .build();
-    }
-
     public static RegionDTO fromJsonNode(JsonNode node) {
         return RegionDTO.builder()
                 .cortarNo(node.path("cortarNo").asLong())

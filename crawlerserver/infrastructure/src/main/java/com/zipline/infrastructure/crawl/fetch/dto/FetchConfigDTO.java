@@ -33,6 +33,26 @@ public class FetchConfigDTO {
     @Builder.Default
     private Map<String, String> extraHeader = new HashMap<>();
 
+    public static FetchConfigDTO naverRegionConfig() {
+        return FetchConfigDTO.builder()
+                .requestMethod("GET")
+                .doOutput(false)
+                .accept("application/json")
+                .host("new.land.naver.com")
+                .referer("https://new.land.naver.com/")
+                .secChUa("\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"")
+                .secChUaMobile("?0")
+                .secChUaPlatform("\"Windows\"")
+                .secFetchDest("empty")
+                .secFetchMode("cors")
+                .secFetchSite("same-origin")
+                .userAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36")
+                .acceptLanguage("ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
+                .connectTimeout(5000)
+                .readTimeout(10000)
+                .build();
+    }
+
     public static FetchConfigDTO naverDefaultConfig() {
         return FetchConfigDTO.builder()
                 .requestMethod("GET")

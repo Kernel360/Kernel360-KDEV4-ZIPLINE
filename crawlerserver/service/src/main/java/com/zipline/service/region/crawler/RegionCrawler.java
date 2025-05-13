@@ -11,7 +11,6 @@ import com.zipline.service.region.dto.RegionDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,20 +26,10 @@ public class RegionCrawler {
 
     public void executeCrawl(Fetcher fetcher) {
         log.info("지역 정보 수집 시작");
-        initializeKoreaIfNotExists();
         executeLevel(1, fetcher);
         executeLevel(2, fetcher);
         executeLevel(3, fetcher);
         logCollectionSummary();
-    }
-
-    @Transactional
-    private void initializeKoreaIfNotExists() {
-        if (regionRepository.findByCortarNo(KOREA_CORTAR_NO).isEmpty()) {
-            Region koreaRegion = RegionDTO.createKoreaRegion();
-            regionRepository.save(koreaRegion);
-            log.info("한국 지역 생성 성공");
-        }
     }
 
     private void executeLevel(int level, Fetcher fetcher) {
@@ -61,21 +50,8 @@ public class RegionCrawler {
     private void collectRegionsForParent(Fetcher fetcher, Long parentCortarNo, int targetLevel) {
         String url = API_BASE_URL + String.format("%010d", parentCortarNo);
 
-        FetchConfigDTO fetchConfig = FetchConfigDTO.builder()
-                .accept("application/json")
-                .host("new.land.naver.com")
-                .referer("https://new.land.naver.com/")
-                .secChUa("\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"")
-                .secChUaMobile("?0")
-                .secChUaPlatform("\"Windows\"")
-                .secFetchDest("empty")
-                .secFetchMode("cors")
-                .secFetchSite("same-origin")
-                .userAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36")
-                .acceptLanguage("ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                .connectTimeout(5000)
-                .readTimeout(10000)
-                .build();
+        FetchConfigDTO fetchConfig = FetchConfigDTO.naverRegionConfig();
+
         try {
             String response = fetcher.fetch(url,fetchConfig);
             if (response == null) {
