@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset jungwoo_shin:create-regions-table dbms:mariadb
+--changeset jungwoo_shin:create-regions-table-v1 runOnChange:true dbms:mariadb
 
 CREATE TABLE IF NOT EXISTS regions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

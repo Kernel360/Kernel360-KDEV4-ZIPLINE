@@ -1,5 +1,7 @@
 --liquibase formatted sql
---changeset jungwoo_shin:create-after-region-insert-trigger runOnChange="true" endDelimiter:// dbms:mariadb
+--changeset jungwoo_shin:create-after-region-insert-trigger-v1 runOnChange="true" endDelimiter:// dbms:mariadb
+
+DROP TRIGGER IF EXISTS after_region_insert//
 
 CREATE TRIGGER after_region_insert
 AFTER INSERT ON regions

@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,9 +59,6 @@ public interface NaverRawArticleRepository extends JpaRepository<NaverRawArticle
     @Query("UPDATE NaverRawArticle n SET n.migrationStatus = :status WHERE n.cortarNo = :cortarNo")
     int resetMigrationStatusForRegion(@Param("cortarNo") Long cortarNo, @Param("status") MigrationStatus status);
 
-    /**
-     * 특정 지역의 마이그레이션 대기 중인 데이터 수 조회
-     */
     long countByCortarNoAndMigrationStatus(Long cortarNo, MigrationStatus status);
 
     /**
@@ -68,8 +66,15 @@ public interface NaverRawArticleRepository extends JpaRepository<NaverRawArticle
      */
     List<NaverRawArticle> findByCreatedAtAfter(LocalDateTime date);
 
-    /**
-     * 특정 마이그레이션 상태의 데이터 수 조회
-     */
     long countByMigrationStatus(MigrationStatus status);
+
+    @Procedure(name = "MigrateAllPendingArticles")
+    void migrateAllPendingArticles();
+
+    @Procedure(name = "MigrateArticlesByRegion")
+    void migrateArticlesByRegion(@Param("region_code") Long regionCode);
+
+    @Procedure(name = "RetryFailedMigrations")
+    void retryFailedMigrations();
+
 }

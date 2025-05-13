@@ -1,20 +1,66 @@
 databaseChangeLog:
+  ## 실제 DB 테이블 생성 (리퀴베이스는 JPA 테이블 생성전에 실행)
   - include:
-      file: changes/v1/region/tables/01-create-regions-table.sql
+      file: changes/region/tables/01-create-regions-table.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/v1/region/tables/02-create-migrations-table.sql
+      file: changes/region/tables/02-create-migrations-table.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/v1/region/tables/03-create-crawls-table.sql
+      file: changes/region/tables/03-create-crawls-table.sql
+      relativeToChangelogFile: true
+
+  ## Json 파싱 함수
+  - include:
+      file: changes/naverMigration/function/01-create-function-get-json-value.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/v1/region/triggers/01-drop-trigger.sql
+      file: changes/naverMigration/function/02-create-function-safe-to-double.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/v1/region/triggers/02-create-after-region-insert-trigger.sql
+      file: changes/naverMigration/function/03-create-function-safe-to-long.sql
+      relativeToChangelogFile: true
+
+  ## 매물 마이그레이션 함수
+  - include:
+      file: changes/naverMigration/procedures/01-create-procedure-migrate-naver-raw-article.sql
+      relativeToChangelogFile: true
+
+#  ## 자동 인서트 트리거
+#  - include:
+#      file: db/changelog/changes/01-create-trigger-after-insert.sql
+#  - include:
+#      file: db/changelog/changes/06-create-trigger-after-update.sql
+#
+  ## 수동 트리거 함수
+  - include:
+      file: changes/naverMigration/procedures/manual/01-create-procedure-migrate-all-pending-articles.sql
       relativeToChangelogFile: true
   - include:
-      file: changes/v1/region/triggers/03-create-after-region-update-trigger.sql
+      file: changes/naverMigration/procedures/manual/02-create-procedure-migrate-articles-by-region.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/naverMigration/procedures/manual/03-create-procedure-retry-failed-migrations.sql
+      relativeToChangelogFile: true
+
+  ## 지역코드 크롤링 자동 트리거
+#  - include:
+#      file: changes/v1/region/triggers/01-drop-trigger.sql
+#      relativeToChangelogFile: true
+  - include:
+      file: changes/region/triggers/02-create-after-region-insert-trigger.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/region/triggers/03-create-after-region-update-trigger.sql
+      relativeToChangelogFile: true
+
+
+  ## 상태확인 뷰
+  - include:
+      file: changes/naverMigration/view/01-create-view-migration-statistics.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/naverMigration/view/02-create-view-migration-statistics-by-region.sql
+      relativeToChangelogFile: true
+
 

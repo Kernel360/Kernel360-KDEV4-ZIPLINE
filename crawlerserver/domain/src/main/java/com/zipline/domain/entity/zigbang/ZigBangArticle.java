@@ -37,6 +37,9 @@ public class ZigBangArticle {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Column(name = "migration_status")
     @Enumerated(EnumType.STRING)
     private MigrationStatus migrationStatus;
@@ -47,13 +50,20 @@ public class ZigBangArticle {
     @Column(name = "migrated_at")
     private LocalDateTime migratedAt;
 
-
     public ZigBangArticle create(String articleId, String geohash, PropertyCategory category, String rawData) {
         this.articleId = articleId;
         this.geohash = geohash;
         this.category = category;
         this.rawData = rawData;
         this.createdAt = LocalDateTime.now();
+        return this;
+    }
+
+    public ZigBangArticle update(String geohash, PropertyCategory category, String rawData) {
+        this.geohash = geohash;
+        this.category = category;
+        this.rawData = rawData;
+        this.updatedAt = LocalDateTime.now();
         return this;
     }
 }

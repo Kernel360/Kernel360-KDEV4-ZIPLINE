@@ -16,6 +16,7 @@ import com.zipline.infrastructure.zigbang.ZigBangCrawlRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
@@ -36,6 +37,9 @@ public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
     // 격자 간격
     private static final double LAT_STEP = 0.05;
     private static final double LON_STEP = 0.05;
+
+    // 한번에 요청할 아이템 개수
+    private static final int ITEMS_PER_REQUEST = 14;
 
     protected final ObjectMapper objectMapper;
     protected final ZigBangCrawlRepository crawlRepo;
@@ -101,12 +105,7 @@ public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
     protected void updateCrawlError(String geohash, PropertyCategory category, String message) {
         ZigBangCrawl crawl = crawlRepo.findById(ZigBangCrawl.buildId(geohash, category))
                 .orElse(ZigBangCrawl.create(geohash, category));
-
         crawlRepo.save(crawl.errorWithLog(message, 1000, CrawlStatus.FAILED));
-    }
-
-    protected void randomDelay() {
-        RandomSleepUtil.sleep();
     }
 
     protected void  fetchAndSaveItemDetails(Fetcher fetcher, String geohash, PropertyCategory category, List<Long> itemIds) throws Exception {
@@ -115,26 +114,18 @@ public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
         FetchConfigDTO config = FetchConfigDTO.zigbangPostConfig();
         RandomSleepUtil randomSleepUtil =  new RandomSleepUtil();
 
-        // 14= 잘라서보내는 요청크기
-        for (int i = 0; i < itemIds.size(); i += 14) {
-            int end = Math.min(i + 14, itemIds.size());
+        for (int i = 0; i < itemIds.size(); i += ITEMS_PER_REQUEST) {
+            int end = Math.min(i + ITEMS_PER_REQUEST, itemIds.size());
             List<Long> subList = itemIds.subList(i, end);
             String body = buildJsonBody(subList);
             log.info("바디 확인" + body);
             String response = fetcher.fetchPost(ITEM_DETAIL_POST_URL, body, config);
             if (response != null && !response.isEmpty()) {
                 saveRawArticles(geohash, category, response);
-            }else if (response.contains("400")) {
-                log.warn("지오해시 {} / 카테고리 {} 요청 실패 400", geohash, category);
-                randomSleepUtil.sleepShort();
-            }else if (response.contains("307")) {
-                log.warn("지오해시 {} / 카테고리 {} 리다이렉트 발생 307", geohash, category);
-                randomSleepUtil.sleepShort();
-            }else if (response==null || response.isEmpty()) {
+            }else{
                 log.warn("지오해시 {} / 카테고리 {} 요청 실패 → 빈 리스트로 대체", geohash, category);
-                randomSleepUtil.sleepShort();
             }
-            randomDelay();
+            RandomSleepUtil.sleep();
         }
         log.info("직방 매물 상세 정보 수집 완료 - geohash: {}, category: {}", geohash, category);
     }
@@ -178,7 +169,7 @@ public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
                 log.warn("지오해시 {} / 카테고리 {} 요청 실패 → 빈 리스트로 대체", geohash, category);
                 return Collections.emptyList();
             }
-            randomDelay();
+            RandomSleepUtil.sleep();
         }
 
         log.info("직방 매물 ID 수집 완료 - geohash: {}, category: {}, 총 건수: {}", geohash, category, itemIds.size());
@@ -191,16 +182,42 @@ public abstract class SharedZigbangCrawler implements ZigBangArticleCrawler {
             JsonNode itemsNode = rootNode.get("items");
 
             if (itemsNode != null && itemsNode.isArray()) {
+                List<String> idsToFetch = new ArrayList<>();
+                Map<String, JsonNode> nodeMap = new HashMap<>();
+
                 for (JsonNode node : itemsNode) {
-                    Long id = node.get("item_id").asLong();
-                    ZigBangArticle article = new ZigBangArticle();
-                    article.create(id.toString(), geohash, category, node.toString());
-                    articleRepo.save(article);
+                    String id = node.get("item_id").toString();
+                    idsToFetch.add(id);
+                    nodeMap.put(id, node);
                 }
+
+                List<ZigBangArticle> existingArticles = articleRepo.findAllByArticleIdIn(idsToFetch);
+                Set<String> existingIds = existingArticles.stream()
+                        .map(ZigBangArticle::getArticleId)
+                        .collect(Collectors.toSet());
+
+                List<ZigBangArticle> articlesToSave = new ArrayList<>();
+                for (String id : idsToFetch) {
+                    JsonNode node = nodeMap.get(id);
+                    String dataString = node.toString();
+
+                    ZigBangArticle article;
+
+                    if (existingIds.contains(id)) {
+                        article = existingArticles.stream()
+                                .filter(a -> a.getId().equals(id))
+                                .findFirst()
+                                .orElseThrow();
+                        article.update(geohash, category, dataString);
+                    } else {
+                        article = new ZigBangArticle();
+                        article.create(id, geohash, category, dataString);
+                    }
+                    articlesToSave.add(article);
+                }
+                articleRepo.saveAll(articlesToSave);
             }
-
             log.info("직방 매물 상세데이터 저장 완료 - geohash: {}, item_count: {}", geohash, itemsNode.size());
-
         } catch (Exception e) {
             log.error("직방 매물 저장 실패 - geohash: {}, 오류: {}", geohash, e.getMessage());
         }

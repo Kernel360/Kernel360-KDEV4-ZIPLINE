@@ -26,10 +26,6 @@ public class DefaultZigBangArticleCrawler extends SharedZigbangCrawler {
         for (PropertyCategory category : PropertyCategory.supportedCategories()) {
             for (String geohash : geohashes) {
                 try {
-                    if (isAlreadyCompleted(geohash, category)) {
-                        log.info("이미 완료된 geohash: {}, category: {}", geohash, category);
-                        continue;
-                    }
                     List<Long> itemIds = fetchItemIds(fetcher, geohash, category);
                     if (!itemIds.isEmpty()) {
                         fetchAndSaveItemDetails(fetcher, geohash, category, itemIds);
