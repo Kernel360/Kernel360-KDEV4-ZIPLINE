@@ -61,21 +61,7 @@ public class RegionCrawler {
     private void collectRegionsForParent(Fetcher fetcher, Long parentCortarNo, int targetLevel) {
         String url = API_BASE_URL + String.format("%010d", parentCortarNo);
 
-        FetchConfigDTO fetchConfig = FetchConfigDTO.builder()
-                .accept("application/json")
-                .host("new.land.naver.com")
-                .referer("https://new.land.naver.com/")
-                .secChUa("\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"")
-                .secChUaMobile("?0")
-                .secChUaPlatform("\"Windows\"")
-                .secFetchDest("empty")
-                .secFetchMode("cors")
-                .secFetchSite("same-origin")
-                .userAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36")
-                .acceptLanguage("ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
-                .connectTimeout(5000)
-                .readTimeout(10000)
-                .build();
+        FetchConfigDTO fetchConfig = FetchConfigDTO.regionDefaultConfig();
         try {
             String response = fetcher.fetch(url,fetchConfig);
             if (response == null) {
@@ -105,7 +91,7 @@ public class RegionCrawler {
     private List<RegionDTO> parseRegions(String jsonResponse) {
         List<RegionDTO> regions = new ArrayList<>();
         try {
-        JsonNode regionsNode = new ObjectMapper()
+            JsonNode regionsNode = new ObjectMapper()
                     .readTree(jsonResponse)
                     .path("regionList");
 
