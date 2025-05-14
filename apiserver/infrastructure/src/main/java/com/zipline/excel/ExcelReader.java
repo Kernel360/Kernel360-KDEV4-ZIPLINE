@@ -29,7 +29,7 @@ public class ExcelReader {
 			DataFormatter formatter = new DataFormatter();
 
 			List<T> list = new ArrayList<>();
-			for (int i = 1; i < sheet.getLastRowNum(); i++) {
+			for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 				if (isEmptyRow(sheet.getRow(i), formatter)) {
 					continue;
 				}

@@ -1,5 +1,6 @@
 package com.zipline.service.excel;
 
+import java.time.Duration;
 import java.time.Year;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.zipline.api.GeoCodeResultVO;
 import com.zipline.api.KakaoGeoClient;
+import com.zipline.api.KakaoGeoClientAsync;
 import com.zipline.api.KakaoGeocodeResponseDTO;
 import com.zipline.entity.agentProperty.AgentProperty;
 import com.zipline.entity.customer.Customer;
@@ -38,6 +40,8 @@ import com.zipline.repository.user.UserRepository;
 import io.jsonwebtoken.lang.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,6 +52,7 @@ public class ExcelServiceImpl implements ExcelService {
 	private final CustomerExcelRowMapper customerExcelRowMapper;
 	private final AgentPropertyExcelRowMapper agentPropertyExcelRowMapper;
 	private final KakaoGeoClient kakaoGeoClient;
+	private final KakaoGeoClientAsync kakaoGeoAsyncClient;
 	private final UserRepository userRepository;
 	private final CustomerRepository customerRepository;
 	private final AgentPropertyRepository agentPropertyRepository;
@@ -60,7 +65,8 @@ public class ExcelServiceImpl implements ExcelService {
 		checkCustomerDuplicateInExcel(dtoList);
 		User user = getUserOrThrow(userUid);
 		checkCustomerDuplicateInDB(dtoList);
-		List<Customer> customers = mapToCustomerEntities(dtoList, user);
+		// List<Customer> customers = mapToCustomerEntities(dtoList, user);
+		List<Customer> customers = mapToCustomerEntitiesAsync(dtoList, user);
 		customerRepository.saveAll(customers);
 		log.info("[고객 엑셀 등록 완료] 저장된 고객 수={}", customers.size());
 		return Collections.singletonMap("success Count", customers.size());
@@ -69,13 +75,20 @@ public class ExcelServiceImpl implements ExcelService {
 	@Override
 	@Transactional
 	public Map<String, Integer> registerPropertiesByExcel(MultipartFile excelFile, Long userUid) {
+		long startTime = System.currentTimeMillis();
 		List<AgentPropertyExcelDTO> dtoList = readPropertyExcel(excelFile);
 		log.info("[매물 엑셀 등록 시작] userUid={}, filename={}", userUid, excelFile.getOriginalFilename());
 		User user = getUserOrThrow(userUid);
 		Map<String, Customer> customerMap = prepareCustomersForProperty(dtoList, user);
-		List<AgentProperty> properties = mapToAgentProperties(dtoList, customerMap, user);
+		// List<AgentProperty> properties = mapToAgentProperties(dtoList, customerMap, user);
+		List<AgentProperty> properties = mapToAgentPropertiesAsync(dtoList, customerMap, user);
 		agentPropertyRepository.saveAll(properties);
-		log.info("[매물 엑셀 등록 완료] 저장된 매물 수={}", properties.size());
+
+		long endTime = System.currentTimeMillis();
+		Duration duration = Duration.ofMillis(endTime - startTime);
+		long seconds = duration.toSecondsPart();
+		long millis = duration.toMillisPart();
+		log.info("[매물 엑셀 등록 완료] 저장된 매물 수={}, 소요 시간={}초 {}ms", properties.size(), seconds, millis);
 		return Collections.singletonMap("success Count", properties.size());
 	}
 
@@ -214,6 +227,82 @@ public class ExcelServiceImpl implements ExcelService {
 		}).toList();
 	}
 
+	private List<AgentProperty> mapToAgentPropertiesAsync(List<AgentPropertyExcelDTO> list,
+		Map<String, Customer> customerMap, User user) {
+		log.info("[매물 매핑 시작] 대상 수 = {}", list.size());
+
+		List<Mono<AgentProperty>> propertyMonos = list.stream()
+			.map(dto -> {
+				log.info("[1. 작업 정의] rowNum={}, address={}", dto.getRowNum(), dto.getRoadName());
+
+				return getGeoCodeAsync(dto.getRowNum(), dto.getRoadName())
+					.doOnSubscribe(
+						sub -> log.info("[2. 요청 시작] rowNum={}, address={}", dto.getRowNum(), dto.getRoadName()))
+					.map(geo -> {
+						log.info("[3. 응답 수신] rowNum={}, 위도={}, 경도={}", dto.getRowNum(), geo.getLatitude(),
+							geo.getLongitude());
+
+						Customer customer = customerMap.get(dto.getCustomerName() + "," + dto.getPhoneNo());
+
+						return AgentProperty.builder()
+							.customer(customer)
+							.user(user)
+							.address(geo.getAddressName())
+							.detailAddress(dto.getDetailAddress())
+							.longitude(Double.valueOf(geo.getLongitude()))
+							.latitude(Double.valueOf(geo.getLatitude()))
+							.legalDistrictCode(geo.getLegalDistrictCode())
+							.constructionYear(Year.parse(dto.getConstructionYear()))
+							.floor(dto.getFloor())
+							.deposit(dto.getDeposit())
+							.monthlyRent(dto.getMonthlyRent())
+							.price(dto.getPrice())
+							.moveInDate(dto.getMoveInDate())
+							.startDate(dto.getStartDate())
+							.endDate(dto.getEndDate())
+							.petsAllowed(dto.getPetsAllowed())
+							.hasElevator(dto.getHasElevator())
+							.parkingCapacity(dto.getParkingCapacity())
+							.realCategory(PropertyCategory.valueOf(dto.getRealCategory()))
+							.type(PropertyType.valueOf(dto.getType()))
+							.totalArea(dto.getTotalArea())
+							.netArea(dto.getNetArea())
+							.details(dto.getDetails())
+							.build();
+					});
+			})
+			.toList();
+
+		log.info("[병렬 호출 시작] 총 요청 수 = {}", propertyMonos.size());
+		return Flux.fromIterable(propertyMonos)
+			.delayElements(Duration.ofMillis(5)) // QPS 제한
+			.flatMap(mono -> mono, 40)             // 병렬 제한
+			.collectList()
+			.doOnNext(result -> log.info("[병렬 호출 완료] 응답 수 = {}", result.size()))
+			.block();
+	}
+
+	private List<Customer> mapToCustomerEntitiesAsync(List<CustomerExcelDTO> list, User user) {
+		log.info("[고객 매핑 시작 - 비동기] 대상 수={}", list.size());
+
+		List<Mono<Customer>> monoList = list.stream()
+			.map(dto -> {
+				Mono<String> legalCodeMono = (dto.getPreferredRegion() == null)
+					? Mono.just((String)null)
+					: getGeoCodeAsync(dto.getRowNum(), dto.getPreferredRegion())
+					.map(GeoCodeResultVO::getLegalDistrictCode);
+
+				return legalCodeMono.map(legalCode -> toCustomerEntity(dto, legalCode, user));
+			})
+			.toList();
+
+		return Flux.fromIterable(monoList)
+			.delayElements(Duration.ofMillis(5))
+			.flatMap(Function.identity(), 30)
+			.collectList()
+			.block();
+	}
+
 	private GeoCodeResultVO getGeoCode(int rowNum, String roadName) {
 		log.info("[Kakao API 요청] rowNum={}, 주소={}", rowNum, roadName);
 		KakaoGeocodeResponseDTO response = kakaoGeoClient.getCoordinatesByAddress(roadName);
@@ -244,6 +333,45 @@ public class ExcelServiceImpl implements ExcelService {
 			first.getLatitude(),
 			addressName
 		);
+	}
+
+	public Mono<GeoCodeResultVO> getGeoCodeAsync(int rowNum, String roadName) {
+		log.info("[Kakao API 요청] rowNum={}, 주소={}", rowNum, roadName);
+
+		return kakaoGeoAsyncClient.getCoordinatesByAddressAsync(roadName)
+			.map(response -> {
+				if (response == null || response.getDocuments().isEmpty()) {
+					log.warn("[Kakao API 실패] rowNum={}, 잘못된 주소 값", rowNum);
+					throw new ExcelException(ExcelErrorCode.INVALID_INPUT_VALUE, rowNum, "roadName", roadName,
+						"주소를 찾을 수 없습니다.");
+				}
+
+				KakaoGeocodeResponseDTO.Document first = response.getDocuments().get(0);
+				if (first.getAddress() == null ||
+					!Strings.hasText(first.getAddress().getDongHName()) ||
+					!Strings.hasText(first.getAddress().getDongName())) {
+
+					throw new ExcelException(ExcelErrorCode.INVALID_INPUT_VALUE, rowNum, "roadName", roadName,
+						"해당하는 동 주소를 찾을 수 없습니다.");
+				}
+
+				String addressName = null;
+				if (first.getAddress() != null) {
+					if (first.getAddressType().equalsIgnoreCase("REGION_ADDR")) {
+						addressName = first.getAddress().getJibunAddressName();
+					}
+					if (first.getAddressType().equalsIgnoreCase("ROAD_ADDR")) {
+						addressName = first.getRoadAddress().getRoadAddressName();
+					}
+				}
+
+				return new GeoCodeResultVO(
+					first.getAddress().getLegalDistrictCode(),
+					first.getLongitude(),
+					first.getLatitude(),
+					addressName
+				);
+			});
 	}
 
 	private User getUserOrThrow(Long userUid) {
