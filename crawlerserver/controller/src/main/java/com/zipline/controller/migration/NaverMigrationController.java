@@ -31,6 +31,13 @@ public class NaverMigrationController {
 		return ResponseEntity.ok(response);
 	}
 
+	@GetMapping("/retry/")
+	public ResponseEntity<ApiResponse<TaskResponseDto>> retryFailedMigration() {
+		TaskResponseDto result = migrationService.retryFailedMigrations();
+		ApiResponse<TaskResponseDto> response = ApiResponse.ok("실패한 네이버 마이그레이션 재시도",result);
+		return ResponseEntity.ok(response);
+	}
+
 	@GetMapping("/status/{taskType}")
 	public ResponseEntity<ApiResponse<TaskResponseDto>> getTaskStatus(@PathVariable TaskType taskType) {
 		TaskResponseDto result = migrationService.getTaskStatus(taskType);
