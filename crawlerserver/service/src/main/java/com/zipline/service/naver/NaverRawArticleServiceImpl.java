@@ -52,7 +52,7 @@ public class NaverRawArticleServiceImpl implements NaverRawArticleService {
 				TaskDefinition.of(
 						TaskType.NAVERCRAWLING,
 						"네이버 특정 지역 매물 수집",
-						() -> crawler.executeCrawlForRegion(fetcher, cortarNo)
+						() -> crawler.crawlRegionsByPrefix(fetcher, cortarNo)
 				)
 		);
 	}

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface CrawlRepository extends JpaRepository<Crawl, Long> {
     Crawl findByCortarNo(Long cortarNo);
@@ -35,19 +36,21 @@ public interface CrawlRepository extends JpaRepository<Crawl, Long> {
     @Query("UPDATE Crawl m SET m.errorLog = :errorLog WHERE m.cortarNo = :cortarNo")
     void updateErrorLog(@Param("cortarNo") Long cortarNo, @Param("errorLog") String errorLog);
 
-//    /**
-//     * 네이버 크롤링이 필요한 지역 목록 조회
-//     */
-//    @Query("SELECT r FROM Crawl r WHERE r.naverLastCrawledAt < :cutoffDate OR r.naverStatus IN ('FAILED', 'PROCESSING')")
-//    List<Crawl> findRegionsNeedingCrawlingUpdateForNaver(@Param("cutoffDate") LocalDateTime cutoffDate);
-//
-//    /**
-//     * 네이버 크롤링 최종 시간 업데이트
-//     */
-//    @Transactional
-//    @Modifying
-//    @Query("UPDATE Crawl r SET r.naverLastCrawledAt = :lastCrawledAt WHERE r.cortarNo = :cortarNo")
-//    void updateNaverLastCrawledAt(@Param("cortarNo") Long cortarNo,
-//                                  @Param("lastCrawledAt") LocalDateTime lastCrawledAt);
-//
+
+    @Query("SELECT c FROM Crawl c WHERE CAST(c.cortarNo AS string) LIKE CONCAT(:prefix, '%')")
+    List<Crawl> findAllByRegionPrefix(@Param("prefix") String prefix);
+
+    @Query("SELECT c FROM Crawl c WHERE c.cortarNo >= :lowerBound AND c.cortarNo < :upperBound")
+    List<Crawl> findAllByRegionRange(
+            @Param("lowerBound") Long lowerBound,
+            @Param("upperBound") Long upperBound);
+
+    @Query("SELECT c.cortarNo FROM Crawl c WHERE " +
+            "CAST(c.cortarNo AS string) LIKE CONCAT(:prefix, '%') AND " +
+            "(c.naverLastCrawledAt IS NULL OR c.naverLastCrawledAt < :cutoffDate) AND " +
+            "c.naverCrawlStatus <> 'PROCESSING'")
+    Page<Long> findRegionsWithPrefixNeedingCrawlingUpdateForNaver(
+            @Param("prefix") String prefix,
+            @Param("cutoffDate") LocalDateTime cutoffDate,
+            Pageable pageable);
 }
